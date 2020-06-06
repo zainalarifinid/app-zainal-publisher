@@ -1,8 +1,9 @@
-const express = require('express')
+require('dotenv').config();
+const express = require('express');
 const fs = require('fs');
 var log = require('./config/logger');
-const app = express()
-const port = 3000
+const app = express();
+const port = process.env.PORT || 3000;
 
 function execShellCommand(cmd) {
   const exec = require('child_process').exec;

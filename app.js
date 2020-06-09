@@ -29,6 +29,8 @@ app.get('/publish/:projectName', async (req, res) => {
     await execShellCommand(`sh command/publisher.sh ${projectName}`);
     res.send(`Your Project ${req.params.projectName} has been updated`); 
   } else {
+    await execShellCommand(`eval "$(ssh-agent -s)"`);
+    await execShellCommand(`ssh-add ~/.ssh/id_rsa`);
     await execShellCommand(`git clone git@gitlab.com:dickyjiang/${projectName}.git repo/${projectName}`)
     log.info(`trying to deploy ${projectName}`);
     await execShellCommand(`sh command/publisher.sh ${projectName}`);

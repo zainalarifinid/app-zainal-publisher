@@ -2,10 +2,24 @@
 
 require('dotenv').config();
 const express = require('express');
+const multer = require('multer');
 const fs = require('fs');
 var log = require('./config/logger');
 const app = express();
+const path = require('path');
 const port = process.env.PORT || 3000;
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, 'build-file' );
+  },
+  filename: function(req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.tar.gz');
+  }
+});
+
+const upload = multer({ storage: storage });
 
 function execShellCommand(cmd) {
   const exec = require('child_process').exec;
@@ -20,21 +34,24 @@ function execShellCommand(cmd) {
  }
 
 app.get('/', (req, res) => res.send('This Web current development!'))
-app.get('/publish/:projectName', async (req, res) => {
+app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, next) => {
+  const file = req.file;
   const projectName = req.params.projectName;
-  const isDirectoryExist = fs.existsSync(`repo/${projectName}`);
+  if(!file) {
+    const error = new Error('Please upload the correct build project file');
+    error.httpStatusCode = 400;
+    return next(error);
+  }else{
+    await execShellCommand(`rm -rf repo/${projectName} && mkdir repo/${projectName}`);
+    await execShellCommand(`tar -xzvf ${file.path} --directory repo/${projectName} `)
+    res.json({ code: 200, message: 'Project has been deployed!' });
+  }
+});
 
-  if(isDirectoryExist) {
-    log.info(`trying to deploy ${projectName}`);
-    await execShellCommand(`sh command/publisher.sh ${projectName}`);
-    res.send(`Your Project ${req.params.projectName} has been updated`); 
-  } else {
-    await execShellCommand(`eval "$(ssh-agent -s)"`);
-    await execShellCommand(`ssh-add ~/.ssh/id_rsa`);
-    await execShellCommand(`git clone git@gitlab.com:dickyjiang/${projectName}.git repo/${projectName}`)
-    log.info(`trying to deploy ${projectName}`);
-    await execShellCommand(`sh command/publisher.sh ${projectName}`);
-    res.send(`Your Project ${req.params.projectName} has been updated`);
+app.get('/:projectName', (req, res) => {
+  const projectName = req.params.projectName;
+  if(projectName) {
+    res.sendFile(path.join(__dirname + `/repo/${projectName}`));
   }
 });
 

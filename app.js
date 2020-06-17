@@ -67,7 +67,8 @@ app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, n
     error.httpStatusCode = 400;
     return next(error);
   }else{
-    await execShellCommand(`rm -rf repo/${projectName} && mkdir repo/${projectName}`);
+    await execShellCommand(`rm -rf repo/${projectName}`);
+    await execShellCommand(`mkdir repo/${projectName}`);
     await execShellCommand(`tar -xzvf ${file.path} --directory repo/${projectName} `)
     res.json({ code: 200, message: 'Project has been deployed!' });
   }

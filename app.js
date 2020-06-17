@@ -37,7 +37,7 @@ function execShellCommand(cmd) {
 
 // app.get('/', (req, res) => res.send('This Web current development!'));
 
-app.all("*", (req, res) => {
+app.get("*", (req, res) => {
   try {
     if(req.path.split('/').length > 2) {
       res.sendFile(__dirname + `/repo/${req.path.replace('fluffy-production-dashboard', 'fluffy-production-dashboard/dist')}`);

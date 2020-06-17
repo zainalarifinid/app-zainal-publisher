@@ -9,6 +9,8 @@ const app = express();
 const path = require('path');
 const port = process.env.PORT || 3000;
 
+app.use(express.static(__dirname + `/repo/fluffy-production-dashboard/dist/static`));
+
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, 'build-file' );
@@ -33,7 +35,29 @@ function execShellCommand(cmd) {
   });
  }
 
-app.get('/', (req, res) => res.send('This Web current development!'));
+// app.get('/', (req, res) => res.send('This Web current development!'));
+
+app.all("*", (req, res) => {
+  try {
+    if(req.path.split('/').length > 2) {
+      res.sendFile(__dirname + `/repo/${req.path.replace('fluffy-production-dashboard', 'fluffy-production-dashboard/dist')}`);
+    } else {
+      res.sendFile(__dirname + `/repo/${req.path}/dist/index.html`);
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Something went wrong" });
+  }
+});
+
+// app.get('/:projectName', (req, res) => {
+//   const projectName = req.params.projectName;
+//   console.log(`user try to load ${projectName}`);
+//   if(projectName) {
+//     console.log(`res sendFile : ${__dirname + `/repo/${projectName}`}`);
+//     res.sendFile(__dirname + `/repo/${projectName}/dist/index.html`);
+//   }
+// });
 
 app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, next) => {
   const file = req.file;
@@ -46,15 +70,6 @@ app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, n
     await execShellCommand(`rm -rf repo/${projectName} && mkdir repo/${projectName}`);
     await execShellCommand(`tar -xzvf ${file.path} --directory repo/${projectName} `)
     res.json({ code: 200, message: 'Project has been deployed!' });
-  }
-});
-
-app.get('/:projectName', (req, res) => {
-  const projectName = req.params.projectName;
-  console.log(`user try to load ${projectName}`);
-  if(projectName) {
-    console.log(`res sendFile : ${__dirname + `/repo/${projectName}`}`);
-    res.sendFile(__dirname + `/repo/${projectName}/dist/index.html`);
   }
 });
 

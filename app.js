@@ -35,15 +35,6 @@ function execShellCommand(cmd) {
 
 app.get('/', (req, res) => res.send('This Web current development!'));
 
-app.get('/:projectName', (req, res) => {
-  const projectName = req.params.projectName;
-  console.log(`user try to load ${projectName}`);
-  if(projectName) {
-    console.log(`res sendFile : ${__dirname + `/repo/${projectName}`}`);
-    res.sendFile(__dirname + `/repo/${projectName}/dist/index.html`);
-  }
-});
-
 app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, next) => {
   const file = req.file;
   const projectName = req.params.projectName;
@@ -55,6 +46,15 @@ app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, n
     await execShellCommand(`rm -rf repo/${projectName} && mkdir repo/${projectName}`);
     await execShellCommand(`tar -xzvf ${file.path} --directory repo/${projectName} `)
     res.json({ code: 200, message: 'Project has been deployed!' });
+  }
+});
+
+app.get('/:projectName', (req, res) => {
+  const projectName = req.params.projectName;
+  console.log(`user try to load ${projectName}`);
+  if(projectName) {
+    console.log(`res sendFile : ${__dirname + `/repo/${projectName}`}`);
+    res.sendFile(__dirname + `/repo/${projectName}/dist/index.html`);
   }
 });
 

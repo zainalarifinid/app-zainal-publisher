@@ -7,6 +7,9 @@ const fs = require('fs');
 var log = require('./config/logger');
 const app = express();
 const path = require('path');
+
+const listWebhook = require('./data/webhook_server');
+
 const port = process.env.PORT || 3000;
 
 app.use(express.static(__dirname + `/repo/fluffy-production-dashboard/dist/static`));
@@ -60,8 +63,11 @@ app.get("*", (req, res) => {
 // });
 
 app.post('/publish/:projectName', upload.single('dataBuild'), async (req, res, next) => {
+  if (!listWebhook.includes(req.ip)) res.json({ code: 400, message: 'You are not authorize to deploy this project' });
+
   const file = req.file;
   const projectName = req.params.projectName;
+  
   if(!file) {
     const error = new Error('Please upload the correct build project file');
     error.httpStatusCode = 400;
